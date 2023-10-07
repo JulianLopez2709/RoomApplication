@@ -11,6 +11,8 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView.LayoutManager
 import com.example.myapplication.databinding.ActivityMainBinding
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -19,10 +21,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: ViewModel
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var adapter : AdapterNotes
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        initAdapter()
 
         viewModel = ViewModelProvider(this).get(ViewModel::class.java)
 
@@ -30,7 +35,17 @@ class MainActivity : AppCompatActivity() {
             showAddNoteDialog()
         }
 
+        viewModel.allNotes.observe(this){
+            println("Here: ${it}")
+            adapter.setData(it)
+        }
 
+    }
+
+    private fun initAdapter() {
+        adapter = AdapterNotes(emptyList())
+        binding.recyclerViewMain.adapter = adapter
+        binding.recyclerViewMain.layoutManager = LinearLayoutManager(this)
     }
 
     private fun showAddNoteDialog() {
@@ -55,6 +70,8 @@ class MainActivity : AppCompatActivity() {
             if (inputCheck(etNoteTitle.text.toString(), etNoteDescription.text.toString())) {
                 val notes = Notes(noteTitle =  etNoteTitle.text.toString(), noteDescription = etNoteDescription.text.toString(), id = 0)
                 viewModel.addData(notes)
+                Toast.makeText(this, "Data added", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
             } else{
                 Toast.makeText(this, "Please enter data", Toast.LENGTH_SHORT).show()
             }
