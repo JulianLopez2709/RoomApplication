@@ -9,4 +9,8 @@ class Repository(private val dao:Dao) {
     }
 
     val getAllNotes:LiveData<List<Notes>> = dao.getAllNotes()
+
+    suspend fun updateData(notes: Notes){
+        dao.updateNote(notes)
+    }
 }

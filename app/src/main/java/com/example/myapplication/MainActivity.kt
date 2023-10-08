@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.app.AlertDialog
 import android.app.Dialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -21,7 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewModel: ViewModel
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter : AdapterNotes
+    private lateinit var adapter: AdapterNotes
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -35,7 +36,7 @@ class MainActivity : AppCompatActivity() {
             showAddNoteDialog()
         }
 
-        viewModel.allNotes.observe(this){
+        viewModel.allNotes.observe(this) {
             println("Here: ${it}")
             adapter.setData(it)
         }
@@ -46,6 +47,65 @@ class MainActivity : AppCompatActivity() {
         adapter = AdapterNotes(emptyList())
         binding.recyclerViewMain.adapter = adapter
         binding.recyclerViewMain.layoutManager = LinearLayoutManager(this)
+
+        adapter.onItemClick = { showActionDialog(it) }
+    }
+
+    private fun showActionDialog(it: Notes) {
+        val builder = AlertDialog.Builder(this)
+
+        builder.setTitle("Select Action")
+
+        builder.setPositiveButton("Delete") { _, _ ->
+            Toast.makeText(this, "Delete", Toast.LENGTH_SHORT).show()
+        }
+        builder.setNegativeButton("Update") { _, _ ->
+            showUpdateDialog(it)
+        }
+        builder.setNeutralButton("Cancel") { _, _ ->
+            Toast.makeText(this, "Cancel", Toast.LENGTH_SHORT).show()
+        }
+        builder.show()
+    }
+
+    private fun showUpdateDialog(it: Notes) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_update_note)
+        dialog.setCancelable(true)
+
+        val layoutParams = WindowManager.LayoutParams()
+        layoutParams.copyFrom(dialog.window!!.attributes)
+        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT
+        layoutParams.height = WindowManager.LayoutParams.WRAP_CONTENT
+
+        val etNoteTitle = dialog.findViewById<EditText>(R.id.etNoteTitle)
+        val etNoteDescription = dialog.findViewById<EditText>(R.id.etNoteDescription)
+
+        etNoteTitle.setText(it.noteTitle)
+        etNoteDescription.setText(it.noteDescription)
+
+        dialog.findViewById<Button>(R.id.btnCancel).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.findViewById<Button>(R.id.btnUpdateNote).setOnClickListener {
+            if (inputCheck(etNoteTitle.text.toString(), etNoteDescription.text.toString())) {
+                val notes = Notes(
+                    noteTitle = etNoteTitle.text.toString(),
+                    noteDescription = etNoteDescription.text.toString(),
+                    id = it.id
+                )
+                viewModel.updateNote(notes)
+                Toast.makeText(this, "Note Updated", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            } else {
+                Toast.makeText(this, "Please enter data", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        dialog.show()
+        dialog.window!!.attributes = layoutParams
     }
 
     private fun showAddNoteDialog() {
@@ -68,11 +128,15 @@ class MainActivity : AppCompatActivity() {
 
         dialog.findViewById<Button>(R.id.btnAddNote).setOnClickListener {
             if (inputCheck(etNoteTitle.text.toString(), etNoteDescription.text.toString())) {
-                val notes = Notes(noteTitle =  etNoteTitle.text.toString(), noteDescription = etNoteDescription.text.toString(), id = 0)
+                val notes = Notes(
+                    noteTitle = etNoteTitle.text.toString(),
+                    noteDescription = etNoteDescription.text.toString(),
+                    id = 0
+                )
                 viewModel.addData(notes)
                 Toast.makeText(this, "Data added", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
-            } else{
+            } else {
                 Toast.makeText(this, "Please enter data", Toast.LENGTH_SHORT).show()
             }
         }

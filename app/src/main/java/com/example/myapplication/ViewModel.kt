@@ -24,4 +24,10 @@ class ViewModel(application: Application):AndroidViewModel(application) {
             repository.addData(notes)
         }
     }
+
+    fun updateNote(notes: Notes){
+        viewModelScope.launch(Dispatchers.IO){
+            repository.updateData(notes)
+        }
+    }
 }
